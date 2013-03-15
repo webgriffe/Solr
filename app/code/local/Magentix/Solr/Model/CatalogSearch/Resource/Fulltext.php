@@ -84,4 +84,35 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
         return $this;
     }
     
+    /**
+     * Regenerate search index for store(s)
+     *
+     * @param  int|null $storeId
+     * @param  int|array|null $productIds
+     * @return Magentix_Solr_Model_CatalogSearch_Resource_Fulltext
+     */
+    public function rebuildIndex($storeId = null, $productIds = null) {
+        parent::rebuildIndex($storeId,$productIds);
+        
+        Mage::getModel('solr/indexer')->refresh($productIds);
+
+        return $this;
+    }
+    
+    /**
+     * Delete search index data for store
+     *
+     * @param int $storeId Store View Id
+     * @param int $productId Product Entity Id
+     * @return Mage_CatalogSearch_Model_Resource_Fulltext
+     */
+    public function cleanIndex($storeId = null, $productId = null)
+    {
+        parent::cleanIndex($storeId, $productId);
+        
+        Mage::getModel('solr/indexer')->refresh($productId);
+
+        return $this;
+    }
+    
 }

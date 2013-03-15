@@ -41,17 +41,18 @@ class Magentix_Solr_Model_Indexer {
     * Refresh Solr Index
     * 
     * @param Varien_Event_Observer $observer
+    * @param int|array|null $productIds
     */
-    public function refresh($observer) {
+    public function refresh($productIds = null) {
         if(!Mage::getStoreConfigFlag('solr/active/admin')) {
             return;
         }
-        
-        $products = $this->_getConnection()->fetchAll('SELECT * FROM '.$this->_getTable('catalogsearch/fulltext'));
+
+        $products = $this->_getConnection()->query($this->_buildQuery($productIds));
         
         $documents = array();
         
-        foreach($products as $product) {
+        while($product = $products->fetch()) {
             $document = Mage::getModel('solr/document');
 
             $document->addField('id',$product['product_id']);
@@ -63,8 +64,19 @@ class Magentix_Solr_Model_Indexer {
         
         try {
             $search = Mage::getModel('solr/search');
-            $search->deleteAllDocuments();
-            $search->addDocuments($documents);
+            
+            if(is_numeric($productIds)) {
+                $search->deleteById($productIds);
+            } else if(is_array($productIds)) {
+                $search->deleteByMultipleIds($productIds);
+            } else {
+                $search->deleteAllDocuments();
+            }
+            
+            if(count($documents)) {
+                $search->addDocuments($documents);
+            }
+            
             $search->commit();
             $search->optimize();
         } catch (Exception $e) {
@@ -72,6 +84,28 @@ class Magentix_Solr_Model_Indexer {
         }
 
         return;
+    }
+    
+    /**
+     * Build Query
+     * 
+     * @param int|array|null $productIds
+     * @param string $where
+     * @return string
+     */
+    public function _buildQuery($productIds = null) {
+        $query = 'SELECT * FROM '.$this->_getTable('catalogsearch/fulltext');
+
+        $where = '';
+        
+        if($productIds) {
+            if(is_numeric($productIds)) { $where .= ' WHERE product_id = '.$productIds; }
+            if(is_array($productIds)) { $where .= ' WHERE product_id IN('.implode(',',$productIds).')'; }
+        }
+        
+        $query .= $where;
+        
+        return $query;
     }
     
     /**

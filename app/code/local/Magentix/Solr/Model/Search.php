@@ -88,6 +88,18 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service {
     }
     
     /**
+     * Delete specific document
+     * 
+     * @return Magentix_Solr_Model_Search
+     * @param int $productId
+     */
+    public function deleteDocument($productId) {
+        $this->deleteByQuery('id:'.$productId);
+        
+        return $this;
+    }
+    
+    /**
      * Set Solr response
      * 
      * @param Apache_Solr_Response $response
