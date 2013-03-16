@@ -35,22 +35,18 @@
  * @author Matthieu Vion <contact@magentix.fr>
  */
 
-class Magentix_Solr_Adminhtml_SolrController extends Mage_Adminhtml_Controller_Action {
+class Magentix_Solr_Adminhtml_SolrController extends Mage_Adminhtml_Controller_Action
+{
     
     /**
      * Delete action
      */
-    public function deleteAction() {
-        try {
-            $search = Mage::getModel('solr/search');
-            $search->deleteAllDocuments();
-            $search->commit();
-            Mage::getSingleton('adminhtml/session')->addSuccess($this->__('All documents have been deleted'));
-        } catch (Exception $e) {
-            Mage::getSingleton('adminhtml/session')->addNotice($this->__('Can not delete documents. %s',$e->getMessage()));
-        }
+    public function cleanAction()
+    {
+        Mage::getModel('solr/indexer')->cleanIndex();
         
         $this->_redirect('*/system_config/edit',array('section'=>'solr'));
+        
         return;
     }
     
