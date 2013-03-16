@@ -35,7 +35,8 @@
  * @author Matthieu Vion <contact@magentix.fr>
  */
 
-class Magentix_Solr_Block_Delete extends Mage_Adminhtml_Block_System_Config_Form_Field {
+class Magentix_Solr_Block_Delete extends Mage_Adminhtml_Block_System_Config_Form_Field
+{
 
     /**
      * Return element html
@@ -43,9 +44,10 @@ class Magentix_Solr_Block_Delete extends Mage_Adminhtml_Block_System_Config_Form
      * @param  Varien_Data_Form_Element_Abstract $element
      * @return string
      */
-    protected function _getElementHtml(Varien_Data_Form_Element_Abstract $element) {
+    protected function _getElementHtml(Varien_Data_Form_Element_Abstract $element)
+    {
         $this->setElement($element);
-        $url = $this->getUrl('*/solr/delete');
+        $url = $this->getUrl('*/solr/clean');
 
         $html = $this->getLayout()->createBlock('adminhtml/widget_button')
                      ->setType('button')
