@@ -35,7 +35,8 @@
  * @author Matthieu Vion <contact@magentix.fr>
  */
 
-class Magentix_Solr_Model_Search extends Apache_Solr_Service {
+class Magentix_Solr_Model_Search extends Apache_Solr_Service
+{
     
     /**
      * Represents a Solr response.
@@ -47,7 +48,8 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service {
     /**
      * Constructor, retrieve config for connection to solr server.
      */
-    public function __construct() {
+    public function __construct()
+    {
         $_host = Mage::getStoreConfig('solr/server/host');
         $_port = Mage::getStoreConfig('solr/server/port');
         $_path = Mage::getStoreConfig('solr/server/path');
@@ -62,11 +64,12 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service {
      * @param int $limit
      * @return Magentix_Solr_Model_Search
      */
-    public function loadQuery($query,$storeId=0,$limit=10) {
+    public function loadQuery($query,$storeId=0,$limit=10)
+    {
         $query = preg_quote($query); // Quote regular expression characters . \ + * ? [ ^ ] $ ( ) { } = ! < > | : -
         if(!$this->_response && $query) {
             $params = array(
-                'fl' => 'id,score',
+                'fl' => 'product_id,score',
                 'fq' => 'store_id:'.$storeId,
             );
             $response = $this->search($query,0,$limit,$params,'POST');
@@ -81,7 +84,8 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service {
      * 
      * @return Magentix_Solr_Model_Search
      */
-    public function deleteAllDocuments() {
+    public function deleteAllDocuments()
+    {
         $this->deleteByQuery('*:*');
         
         return $this;
@@ -90,11 +94,27 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service {
     /**
      * Delete specific document
      * 
-     * @return Magentix_Solr_Model_Search
      * @param int $productId
+     * @return Magentix_Solr_Model_Search
      */
-    public function deleteDocument($productId) {
-        $this->deleteByQuery('id:'.$productId);
+    public function deleteDocument($productId)
+    {
+        $this->deleteByQuery('product_id:'.$productId);
+        
+        return $this;
+    }
+    
+    /**
+     * Delete specifics document
+     * 
+     * @param array $productId
+     * @return Magentix_Solr_Model_Search
+     */
+    public function deleteDocuments($productIds)
+    {
+        foreach($productIds as $id) {
+            $this->deleteByQuery('product_id:'.$id);
+        }
         
         return $this;
     }
@@ -104,7 +124,8 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service {
      * 
      * @param Apache_Solr_Response $response
      */
-    public function setResponse(Apache_Solr_Response $response) {
+    public function setResponse(Apache_Solr_Response $response)
+    {
         $this->_response = $response;
     }
     
@@ -113,10 +134,12 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service {
      * 
      * @return array $ids
      */
-    public function getProducts() {
+    public function getProducts()
+    {
         $products = array();
         foreach($this->_response->docs as $doc) {
-            $products[] = array('id'=>$doc->id,'relevance'=>$doc->score);
+            $products[] = array('product_id' => $doc->product_id,
+                                'relevance'  => $doc->score);
         }
         return $products;
     }
@@ -126,17 +149,9 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service {
      * 
      * @return int
      */
-    public function count() {
+    public function count()
+    {
         return count($this->_response->docs);
-    }
-    
-    /**
-     * Test if server configuration is complete
-     * 
-     * @return bool
-     */
-    public function isConfigured() {
-        return Mage::getStoreConfig('solr/server/host') && Mage::getStoreConfig('solr/server/port');
     }
 
     /**
@@ -144,7 +159,8 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service {
      * 
      * @return int
      */
-    public function getStoreId() {
+    public function getStoreId()
+    {
         return Mage::app()->getStore()->getId();
     }
     
