@@ -33,21 +33,24 @@
  * @category Solr
  * @package Magentix_Solr
  * @author Matthieu Vion <contact@magentix.fr>
+ * @contributor Nicolas Trossat <nicolas.trossat@boutikcircus.com>
  */
 
-class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSearch_Model_Resource_Fulltext {
+class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSearch_Model_Resource_Fulltext
+{
     
     /**
-     * Overloaded method prepareResult. Prepare results for query
-     * Replaces the traditional fulltext search with a Solr Search (if active)
+     * Overloaded method prepareResult.
+     * Prepare results for query.
+     * Replaces the traditional fulltext search with a Solr Search (if active).
      *
      * @param Mage_CatalogSearch_Model_Fulltext $object
      * @param string $queryText
      * @param Mage_CatalogSearch_Model_Query $query
      * @return Magentix_Solr_Model_CatalogSearch_Resource_Fulltext
      */
-    public function prepareResult($object, $queryText, $query) {
-        
+    public function prepareResult($object, $queryText, $query)
+    {
         if(!Mage::getStoreConfigFlag('solr/active/frontend')) {
             return parent::prepareResult($object, $queryText, $query);
         }
@@ -65,7 +68,7 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
                     $data = array();
                     foreach($products as $product) {
                         $data[] = array('query_id'   => $query->getId(),
-                                        'product_id' => $product['id'],
+                                        'product_id' => $product['product_id'],
                                         'relevance'  => $product['relevance']);
                     }
 
@@ -85,21 +88,24 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
     }
     
     /**
+     * Overloaded method rebuildIndex.
      * Regenerate search index for store(s)
      *
      * @param  int|null $storeId
      * @param  int|array|null $productIds
      * @return Magentix_Solr_Model_CatalogSearch_Resource_Fulltext
      */
-    public function rebuildIndex($storeId = null, $productIds = null) {
+    public function rebuildIndex($storeId = null, $productIds = null)
+    {
         parent::rebuildIndex($storeId,$productIds);
-        
-        Mage::getModel('solr/indexer')->refresh($productIds);
+
+        Mage::getModel('solr/indexer')->rebuildIndex($productIds);
 
         return $this;
     }
     
     /**
+     * Overloaded method cleanIndex.
      * Delete search index data for store
      *
      * @param int $storeId Store View Id
@@ -110,7 +116,7 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
     {
         parent::cleanIndex($storeId, $productId);
         
-        Mage::getModel('solr/indexer')->refresh($productId);
+        Mage::getModel('solr/indexer')->cleanIndex($productId);
 
         return $this;
     }
