@@ -491,8 +491,11 @@
     </types>
 
     <fields>
-        <!-- Magento Product Id -->
+        <!-- Magento Fulltext Id -->
         <field name="id" type="string" indexed="true" stored="true" required="true" />
+        
+        <!-- Magento Product Id -->
+        <field name="product_id" type="string" indexed="true" stored="true" required="true" />
         
         <!-- Magento Product Store Id -->
         <field name="store_id" type="string" indexed="true" stored="true" required="true" />
