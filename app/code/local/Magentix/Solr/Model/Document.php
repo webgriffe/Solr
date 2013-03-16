@@ -35,6 +35,7 @@
  * @author Matthieu Vion <contact@magentix.fr>
  */
 
-class Magentix_Solr_Model_Document extends Apache_Solr_Document {
+class Magentix_Solr_Model_Document extends Apache_Solr_Document
+{
     
 }
