@@ -33,17 +33,20 @@
  * @category Solr
  * @package Magentix_Solr
  * @author Matthieu Vion <contact@magentix.fr>
+ * @contributor Nicolas Trossat <nicolas.trossat@boutikcircus.com>
  */
 
-class Magentix_Solr_Model_Indexer {
+class Magentix_Solr_Model_Indexer
+{
     
     /**
-    * Refresh Solr Index
+    * Rebuild Solr Index
     * 
     * @param Varien_Event_Observer $observer
     * @param int|array|null $productIds
     */
-    public function refresh($productIds = null) {
+    public function rebuildIndex($productIds = null)
+    {
         if(!Mage::getStoreConfigFlag('solr/active/admin')) {
             return;
         }
@@ -55,7 +58,8 @@ class Magentix_Solr_Model_Indexer {
         while($product = $products->fetch()) {
             $document = Mage::getModel('solr/document');
 
-            $document->addField('id',$product['product_id']);
+            $document->addField('id',$product['fulltext_id']);
+            $document->addField('product_id',$product['product_id']);
             $document->addField('store_id',$product['store_id']);
             $document->addField('fulltext',$product['data_index']);
             
@@ -64,23 +68,45 @@ class Magentix_Solr_Model_Indexer {
         
         try {
             $search = Mage::getModel('solr/search');
-            
-            if(is_numeric($productIds)) {
-                $search->deleteById($productIds);
-            } else if(is_array($productIds)) {
-                $search->deleteByMultipleIds($productIds);
-            } else {
-                $search->deleteAllDocuments();
-            }
-            
-            if(count($documents)) {
-                $search->addDocuments($documents);
-            }
+
+            if(count($documents)) { $search->addDocuments($documents); }
             
             $search->commit();
             $search->optimize();
         } catch (Exception $e) {
             Mage::getSingleton('adminhtml/session')->addNotice(Mage::helper('solr')->__('Can not index data in Solr. %s',$e->getMessage()));
+        }
+
+        return;
+    }
+    
+    /**
+    * Clean Solr Index
+    * 
+    * @param Varien_Event_Observer $observer
+    * @param int|array|null $productIds
+    */
+    public function cleanIndex($productIds = null)
+    {
+        if(!Mage::getStoreConfigFlag('solr/active/admin')) {
+            return;
+        }
+        
+        try {
+            $search = Mage::getModel('solr/search');
+            
+            if(is_numeric($productIds)) {
+                $search->deleteDocument($productIds);
+            } else if(is_array($productIds)) {
+                $search->deleteDocuments($productIds);
+            } else {
+                $search->deleteAllDocuments();
+            }
+
+            $search->commit();
+            $search->optimize();
+        } catch (Exception $e) {
+            Mage::getSingleton('adminhtml/session')->addNotice(Mage::helper('solr')->__('Can not delete data in Solr. %s',$e->getMessage()));
         }
 
         return;
@@ -93,14 +119,19 @@ class Magentix_Solr_Model_Indexer {
      * @param string $where
      * @return string
      */
-    public function _buildQuery($productIds = null) {
+    public function _buildQuery($productIds = null)
+    {
         $query = 'SELECT * FROM '.$this->_getTable('catalogsearch/fulltext');
 
         $where = '';
         
         if($productIds) {
-            if(is_numeric($productIds)) { $where .= ' WHERE product_id = '.$productIds; }
-            if(is_array($productIds)) { $where .= ' WHERE product_id IN('.implode(',',$productIds).')'; }
+            if(is_numeric($productIds)) {
+                $where .= ' WHERE product_id = '.$productIds;
+            }
+            if(is_array($productIds)) {
+                $where .= ' WHERE product_id IN('.implode(',',$productIds).')';
+            }
         }
         
         $query .= $where;
@@ -113,7 +144,8 @@ class Magentix_Solr_Model_Indexer {
     * 
     * @return Mage_Core_Model_Resource
     */
-    public function _getResource() {
+    public function _getResource()
+    {
         return Mage::getSingleton('core/resource');
     }
     
@@ -122,7 +154,8 @@ class Magentix_Solr_Model_Indexer {
     * 
     * @return Varien_Db_Adapter_Pdo_Mysql
     */
-    public function _getConnection() {
+    public function _getConnection()
+    {
         return $this->_getResource()->getConnection('core_read');
     }
     
@@ -131,7 +164,8 @@ class Magentix_Solr_Model_Indexer {
     * 
     * @return string
     */
-    public function _getTable($tableName){
+    public function _getTable($tableName)
+    {
         return $this->_getResource()->getTableName($tableName);
     }
     
