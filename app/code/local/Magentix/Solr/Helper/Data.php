@@ -35,6 +35,7 @@
  * @author Matthieu Vion <contact@magentix.fr>
  */
 
-class Magentix_Solr_Helper_Data extends Mage_Core_Helper_Abstract {
+class Magentix_Solr_Helper_Data extends Mage_Core_Helper_Abstract
+{
     
 }
