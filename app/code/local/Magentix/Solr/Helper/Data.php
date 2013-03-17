@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2012, Magentix
+ * Copyright (c) 2012-1013, Magentix
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,5 +37,14 @@
 
 class Magentix_Solr_Helper_Data extends Mage_Core_Helper_Abstract
 {
+    
+    /**
+     * Retrieve Solr Log File
+     * 
+     * @return string
+     */
+    public function getLogFile() {
+        return 'solr.log';
+    }
     
 }
