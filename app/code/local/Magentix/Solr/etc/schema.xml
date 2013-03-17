@@ -502,6 +502,9 @@
         
         <!-- Magento Product Fulltext -->
         <field name="fulltext" type="text_general" indexed="true" stored="true" />
+        
+        <!-- Default Field to search -->
+        <field name="text" type="text_general" indexed="true" stored="false" multiValued="true" />
 
         <dynamicField name="*_i"  type="int"    indexed="true"  stored="true" />
         <dynamicField name="*_s"  type="string"  indexed="true"  stored="true" />
@@ -535,5 +538,7 @@
     </fields>
 
     <uniqueKey>id</uniqueKey>
+    
+    <copyField source="fulltext" dest="text" />
 
 </schema>
