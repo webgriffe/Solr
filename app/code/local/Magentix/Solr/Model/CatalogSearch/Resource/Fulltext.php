@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2012, Magentix
+ * Copyright (c) 2012-1013, Magentix
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  * @category Solr
  * @package Magentix_Solr
  * @author Matthieu Vion <contact@magentix.fr>
- * @contributor Nicolas Trossat <nicolas.trossat@boutikcircus.com>
+ * @contributor Nicolas Trossat <http://www.boutikcircus.com>
  */
 
 class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSearch_Model_Resource_Fulltext
@@ -78,7 +78,7 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
                 $query->setIsProcessed(1);
                 
             } catch (Exception $e) {
-                Mage::log($e->getMessage(),7,'solr.log');
+                Mage::log($e->getMessage(),3,Mage::helper('solr')->getLogFile());
                 return parent::prepareResult($object, $queryText, $query);
             }
             
@@ -99,7 +99,9 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
     {
         parent::rebuildIndex($storeId,$productIds);
 
-        Mage::getModel('solr/indexer')->rebuildIndex($productIds);
+        if(Mage::getStoreConfigFlag('solr/active/admin')) {
+            Mage::getModel('solr/indexer')->rebuildIndex($productIds);
+        }
 
         return $this;
     }
@@ -109,14 +111,16 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
      * Delete search index data for store
      *
      * @param int $storeId Store View Id
-     * @param int $productId Product Entity Id
+     * @param int|array|null $productIds Product Entity Id
      * @return Mage_CatalogSearch_Model_Resource_Fulltext
      */
-    public function cleanIndex($storeId = null, $productId = null)
+    public function cleanIndex($storeId = null, $productIds = null)
     {
-        parent::cleanIndex($storeId, $productId);
+        parent::cleanIndex($storeId, $productIds);
         
-        Mage::getModel('solr/indexer')->cleanIndex($productId);
+        if(Mage::getStoreConfigFlag('solr/active/admin')) {
+            Mage::getModel('solr/indexer')->cleanIndex($productIds);
+        }
 
         return $this;
     }

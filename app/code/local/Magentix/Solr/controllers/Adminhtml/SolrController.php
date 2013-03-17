@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2012, Magentix
+ * Copyright (c) 2012-1013, Magentix
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,11 +39,35 @@ class Magentix_Solr_Adminhtml_SolrController extends Mage_Adminhtml_Controller_A
 {
     
     /**
-     * Delete action
+     * Rebuild action
+     */
+    public function rebuildAction()
+    {
+        $session = Mage::getSingleton('adminhtml/session');
+        
+        if(Mage::getModel('solr/indexer')->rebuildIndex()) {
+            $session->addSuccess(Mage::helper('solr')->__('Data have been successfully built.'));
+        } else {
+            $session->addNotice(Mage::helper('solr')->__('Can not index data in Solr, please see log for details.'));
+        }
+        
+        $this->_redirect('*/system_config/edit',array('section'=>'solr'));
+        
+        return;
+    }
+    
+    /**
+     * Clean action
      */
     public function cleanAction()
     {
-        Mage::getModel('solr/indexer')->cleanIndex();
+        $session = Mage::getSingleton('adminhtml/session');
+        
+        if(Mage::getModel('solr/indexer')->cleanIndex()) {
+            $session->addSuccess(Mage::helper('solr')->__('Data have been successfully deleted.'));
+        } else {
+            $session->addNotice(Mage::helper('solr')->__('Can not delete data in Solr, please see log for details.'));
+        }
         
         $this->_redirect('*/system_config/edit',array('section'=>'solr'));
         

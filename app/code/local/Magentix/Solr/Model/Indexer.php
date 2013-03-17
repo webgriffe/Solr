@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2012, Magentix
+ * Copyright (c) 2012-1013, Magentix
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  * @category Solr
  * @package Magentix_Solr
  * @author Matthieu Vion <contact@magentix.fr>
- * @contributor Nicolas Trossat <nicolas.trossat@boutikcircus.com>
+ * @contributor Nicolas Trossat <http://www.boutikcircus.com>
  */
 
 class Magentix_Solr_Model_Indexer
@@ -44,13 +44,10 @@ class Magentix_Solr_Model_Indexer
     * 
     * @param Varien_Event_Observer $observer
     * @param int|array|null $productIds
+    * @return boolean
     */
     public function rebuildIndex($productIds = null)
     {
-        if(!Mage::getStoreConfigFlag('solr/active/admin')) {
-            return;
-        }
-
         $products = $this->_getConnection()->query($this->_buildQuery($productIds));
         
         $documents = array();
@@ -74,10 +71,11 @@ class Magentix_Solr_Model_Indexer
             $search->commit();
             $search->optimize();
         } catch (Exception $e) {
-            Mage::getSingleton('adminhtml/session')->addNotice(Mage::helper('solr')->__('Can not index data in Solr. %s',$e->getMessage()));
+            Mage::log($e->getMessage(),3,Mage::helper('solr')->getLogFile());
+            return false;
         }
 
-        return;
+        return true;
     }
     
     /**
@@ -85,13 +83,10 @@ class Magentix_Solr_Model_Indexer
     * 
     * @param Varien_Event_Observer $observer
     * @param int|array|null $productIds
+    * @return boolean
     */
     public function cleanIndex($productIds = null)
     {
-        if(!Mage::getStoreConfigFlag('solr/active/admin')) {
-            return;
-        }
-        
         try {
             $search = Mage::getModel('solr/search');
             
@@ -106,10 +101,11 @@ class Magentix_Solr_Model_Indexer
             $search->commit();
             $search->optimize();
         } catch (Exception $e) {
-            Mage::getSingleton('adminhtml/session')->addNotice(Mage::helper('solr')->__('Can not delete data in Solr. %s',$e->getMessage()));
+            Mage::log($e->getMessage(),3,Mage::helper('solr')->getLogFile());
+            return false;
         }
 
-        return;
+        return true;
     }
     
     /**
