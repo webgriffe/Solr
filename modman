@@ -1,0 +1,3 @@
+app/code/local/Magentix/Solr app/code/local/Magentix/Solr
+app/etc/modules/Magentix_Solr.xml app/etc/modules/Magentix_Solr.xml
+lib/Apache/Solr lib/Apache/Solr
