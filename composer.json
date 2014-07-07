@@ -1,0 +1,12 @@
+{
+    "name": "magentix/Solr",
+    "type": "magento-module",
+    "license":"BSD-3-Clause",
+    "description":"Make search on Magento CE with Apache Solr",
+    "authors":[
+        {
+            "name":"Matthieu Vion",
+            "email":"contact@magentix.fr"
+        }
+    ]
+}
