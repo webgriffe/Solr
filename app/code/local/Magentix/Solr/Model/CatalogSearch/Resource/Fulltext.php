@@ -38,7 +38,7 @@
 
 class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSearch_Model_Resource_Fulltext
 {
-    
+
     /**
      * Overloaded method prepareResult.
      * Prepare results for query.
@@ -51,7 +51,7 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
      */
     public function prepareResult($object, $queryText, $query)
     {
-        if(!Mage::getStoreConfigFlag('solr/active/frontend')) {
+        if (!Mage::getStoreConfigFlag('solr/active/frontend')) {
             return parent::prepareResult($object, $queryText, $query);
         }
         
@@ -59,26 +59,32 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
         if (!$query->getIsProcessed()) {
             
             try {
+                $foundData = array();
                 $search = Mage::getModel('solr/search')
                           ->loadQuery($queryText,(int)$query->getStoreId(),(int)Mage::getStoreConfig('solr/search/limit'));
                 
-                if($search->count()) {
+                if ($search->count()) {
                     $products = $search->getProducts();
 
                     $data = array();
-                    foreach($products as $product) {
+                    foreach ($products as $product) {
+                        $productId = $product['product_id'];
+                        $relevance = $product['relevance'];
                         $data[] = array('query_id'   => $query->getId(),
-                                        'product_id' => $product['product_id'],
-                                        'relevance'  => $product['relevance']);
+                                        'product_id' => $productId,
+                                        'relevance'  => $relevance
+                        );
+                        $foundData[$productId] = $relevance;
                     }
 
-                    $adapter->insertMultiple($this->getTable('catalogsearch/result'),$data);
+                    $adapter->insertMultiple($this->getTable('catalogsearch/result'), $data);
                 }
-
-                $query->setIsProcessed(1);
                 
+                $this->_foundData = $foundData;
+                $query->setIsProcessed(1);
+
             } catch (Exception $e) {
-                Mage::log($e->getMessage(),3,Mage::helper('solr')->getLogFile());
+                Mage::log($e->getMessage(), 3, Mage::helper('solr')->getLogFile());
                 return parent::prepareResult($object, $queryText, $query);
             }
             
