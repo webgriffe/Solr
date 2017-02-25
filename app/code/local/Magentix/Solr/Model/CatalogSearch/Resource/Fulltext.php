@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2012-1013, Magentix
  * All rights reserved.
@@ -14,7 +15,7 @@
  *  - Neither the name of the Magentix nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,16 +27,15 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * @copyright Copyright 2012, Magentix (http://www.magentix.fr)
  * @license http://www.opensource.org/licenses/BSD-3-Clause BSD 3-Clause
- * 
+ *
  * @category Solr
  * @package Magentix_Solr
  * @author Matthieu Vion <contact@magentix.fr>
  * @contributor Nicolas Trossat <http://www.boutikcircus.com>
  */
-
 class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSearch_Model_Resource_Fulltext
 {
 
@@ -47,22 +47,26 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
      * @param Mage_CatalogSearch_Model_Fulltext $object
      * @param string $queryText
      * @param Mage_CatalogSearch_Model_Query $query
-     * @return Magentix_Solr_Model_CatalogSearch_Resource_Fulltext
+     * @return Magentix_Solr_Model_CatalogSearch_Resource_Fulltext|Mage_CatalogSearch_Model_Resource_Fulltext
      */
     public function prepareResult($object, $queryText, $query)
     {
         if (!Mage::getStoreConfigFlag('solr/active/frontend')) {
             return parent::prepareResult($object, $queryText, $query);
         }
-        
+
         $adapter = $this->_getWriteAdapter();
         if (!$query->getIsProcessed()) {
-            
             try {
                 $foundData = array();
-                $search = Mage::getModel('solr/search')
-                          ->loadQuery($queryText,(int)$query->getStoreId(),(int)Mage::getStoreConfig('solr/search/limit'));
-                
+                /** @var Magentix_Solr_Model_Search $solrModel */
+                $solrModel = Mage::getModel('solr/search');
+                $search = $solrModel->loadQuery(
+                    $queryText,
+                    (int)$query->getStoreId(),
+                    (int)Mage::getStoreConfig('solr/search/limit')
+                );
+
                 if ($search->count()) {
                     $products = $search->getProducts();
 
@@ -70,16 +74,17 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
                     foreach ($products as $product) {
                         $productId = $product['product_id'];
                         $relevance = $product['relevance'];
-                        $data[] = array('query_id'   => $query->getId(),
-                                        'product_id' => $productId,
-                                        'relevance'  => $relevance
+                        $data[] = array(
+                            'query_id' => $query->getId(),
+                            'product_id' => $productId,
+                            'relevance' => $relevance
                         );
                         $foundData[$productId] = $relevance;
                     }
 
                     $adapter->insertMultiple($this->getTable('catalogsearch/result'), $data);
                 }
-                
+
                 $this->_foundData = $foundData;
                 $query->setIsProcessed(1);
 
@@ -87,12 +92,17 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
                 Mage::log($e->getMessage(), 3, Mage::helper('solr')->getLogFile());
                 return parent::prepareResult($object, $queryText, $query);
             }
-            
+        } else {
+            $select = $adapter->select()
+                ->from($this->getTable('catalogsearch/result'), array('product_id', 'relevance'))
+                ->where('query_id=?', $query->getId())
+                ->order(array('relevance DESC'));
+            $this->_foundData = $adapter->fetchPairs($select);
         }
 
         return $this;
     }
-    
+
     /**
      * Overloaded method rebuildIndex.
      * Regenerate search index for store(s)
@@ -103,15 +113,15 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
      */
     public function rebuildIndex($storeId = null, $productIds = null)
     {
-        parent::rebuildIndex($storeId,$productIds);
+        parent::rebuildIndex($storeId, $productIds);
 
-        if(Mage::getStoreConfigFlag('solr/active/admin')) {
+        if (Mage::getStoreConfigFlag('solr/active/admin')) {
             Mage::getModel('solr/indexer')->rebuildIndex($productIds);
         }
 
         return $this;
     }
-    
+
     /**
      * Overloaded method cleanIndex.
      * Delete search index data for store
@@ -123,12 +133,12 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
     public function cleanIndex($storeId = null, $productIds = null)
     {
         parent::cleanIndex($storeId, $productIds);
-        
-        if(Mage::getStoreConfigFlag('solr/active/admin')) {
+
+        if (Mage::getStoreConfigFlag('solr/active/admin')) {
             Mage::getModel('solr/indexer')->cleanIndex($productIds);
         }
 
         return $this;
     }
-    
+
 }
