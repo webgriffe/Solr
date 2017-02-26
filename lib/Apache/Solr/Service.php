@@ -106,7 +106,8 @@ class Apache_Solr_Service
 	 */
 	const PING_SERVLET = 'admin/ping';
 	const UPDATE_SERVLET = 'update';
-	const SEARCH_SERVLET = 'select';
+    const SEARCH_SERVLET = 'select';
+    const SPELL_SERVLET = 'spell';
 	const THREADS_SERVLET = 'admin/threads';
 	const EXTRACT_SERVLET = 'update/extract';
 
@@ -154,7 +155,7 @@ class Apache_Solr_Service
 	 *
 	 * @var string
 	 */
-	protected $_pingUrl, $_updateUrl, $_searchUrl, $_threadsUrl;
+	protected $_pingUrl, $_updateUrl, $_searchUrl, $_spellUrl, $_threadsUrl;
 
 	/**
 	 * Keep track of whether our URLs have been constructed
@@ -274,7 +275,8 @@ class Apache_Solr_Service
 		//Initialize our full servlet URLs now that we have server information
 		$this->_extractUrl = $this->_constructUrl(self::EXTRACT_SERVLET);
 		$this->_pingUrl = $this->_constructUrl(self::PING_SERVLET);
-		$this->_searchUrl = $this->_constructUrl(self::SEARCH_SERVLET);
+        $this->_searchUrl = $this->_constructUrl(self::SEARCH_SERVLET);
+        $this->_spellUrl = $this->_constructUrl(self::SPELL_SERVLET);
 		$this->_threadsUrl = $this->_constructUrl(self::THREADS_SERVLET, array('wt' => self::SOLR_WRITER ));
 		$this->_updateUrl = $this->_constructUrl(self::UPDATE_SERVLET, array('wt' => self::SOLR_WRITER ));
 
@@ -1126,8 +1128,14 @@ class Apache_Solr_Service
 	 * @throws Apache_Solr_HttpTransportException If an error occurs during the service call
 	 * @throws Apache_Solr_InvalidArgumentException If an invalid HTTP method is used
 	 */
-	public function search($query, $offset = 0, $limit = 10, $params = array(), $method = self::METHOD_GET)
-	{
+    public function search(
+        $query,
+        $offset = 0,
+        $limit = 10,
+        $params = array(),
+        $method = self::METHOD_GET,
+        $includeSuggestion = false
+    ) {
 		// ensure params is an array
 		if (!is_null($params))
 		{
@@ -1152,19 +1160,57 @@ class Apache_Solr_Service
 		$params['start'] = $offset;
 		$params['rows'] = $limit;
 
-		$queryString = $this->_generateQueryString($params);
+		$url = $this->_searchUrl;
+        $queryString = $this->_generateQueryString($params);
+        if ($includeSuggestion) {
+            $queryString .= '&spellcheck=true&spellcheck.collate=true&spellcheck.build=true';
+            $url = $this->_spellUrl;
+        }        
 
-		if ($method == self::METHOD_GET)
-		{
-			return $this->_sendRawGet($this->_searchUrl . $this->_queryDelimiter . $queryString);
-		}
-		else if ($method == self::METHOD_POST)
-		{
-			return $this->_sendRawPost($this->_searchUrl, $queryString, FALSE, 'application/x-www-form-urlencoded; charset=UTF-8');
-		}
-		else
-		{
-			throw new Apache_Solr_InvalidArgumentException("Unsupported method '$method', please use the Apache_Solr_Service::METHOD_* constants");
-		}
-	}
+        if ($method == self::METHOD_GET)
+        {
+            return $this->_sendRawGet($url . $this->_queryDelimiter . $queryString);
+        }
+        else if ($method == self::METHOD_POST)
+        {
+            return $this->_sendRawPost($url, $queryString, FALSE, 'application/x-www-form-urlencoded; charset=UTF-8');
+        }
+        else
+        {
+            throw new Apache_Solr_InvalidArgumentException("Unsupported method '$method', please use the Apache_Solr_Service::METHOD_* constants");
+        }
+    }
+
+    /**
+     * Simple Search interface
+     *
+     * @param string $query The raw query string
+     * @param string $method The HTTP method (Apache_Solr_Service::METHOD_GET or Apache_Solr_Service::METHOD::POST)
+     * @return Apache_Solr_Response
+     *
+     * @throws Apache_Solr_HttpTransportException If an error occurs during the service call
+     * @throws Apache_Solr_InvalidArgumentException If an invalid HTTP method is used
+     */
+    public function spell($query, $method = self::METHOD_GET)
+    {
+        $params = array();
+
+        // common parameters in this interface
+//        $params['wt'] = self::SOLR_WRITER;
+//        $params['json.nl'] = $this->_namedListTreatment;
+//
+//        $params['q'] = $query;
+//        $params['spellcheck'] = true;
+//        $params['spellcheck.collate'] = true;
+//        $params['spellcheck.build'] = true;
+
+        if ($method == self::METHOD_GET)
+        {
+            return $this->_sendRawGet($this->_spellUrl . $this->_queryDelimiter . $queryString);
+        }
+        else
+        {
+            throw new Apache_Solr_InvalidArgumentException("Unsupported method '$method', please use the Apache_Solr_Service::METHOD_* constants");
+        }
+    }
 }

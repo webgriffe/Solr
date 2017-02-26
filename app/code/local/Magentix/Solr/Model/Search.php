@@ -37,12 +37,17 @@
 
 class Magentix_Solr_Model_Search extends Apache_Solr_Service
 {
-    
+
     /**
      * Represents a Solr response.
      */
     protected $_response;
-    
+
+    /**
+     * Represents a Solr suggestion.
+     */
+    protected $_suggestions;
+
     /**
      * Constructor, retrieve config for connection to solr server.
      */
@@ -70,8 +75,12 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service
                 'fl' => 'product_id,score',
                 'fq' => 'store_id:'.$storeId,
             );
-            $response = $this->search($query,0,$limit,$params,'POST');
+            $includeSuggestion = true; // todo: (bool)Mage::getStoreConfigFlag('solr/search/suggestion_enable');
+            $response = $this->search($query, 0, $limit, $params, 'POST', $includeSuggestion);
             $this->setResponse($response->response);
+            if (isset($response->spellcheck, $response->spellcheck->suggestions)) {
+                $this->setSuggestions($response->spellcheck->suggestions);
+            }
         }
         
         return $this;
@@ -126,7 +135,27 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service
     {
         $this->_response = $response;
     }
-    
+
+    /**
+     * Set Solr response
+     *
+     * @param array $suggestions
+     */
+    public function setSuggestions($suggestions)
+    {
+        $this->_suggestions = $suggestions;
+    }
+
+    /**
+     * Retrieve suggested query
+     *
+     * @return string
+     */
+    public function getSuggestedQuery()
+    {
+        return $this->_suggestions->collation;
+    }
+
     /**
      * Extract product ids and score in Solr response
      * 
@@ -141,7 +170,7 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service
         }
         return $products;
     }
-    
+
     /**
      * Retreive documents count
      * 
@@ -161,5 +190,5 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service
     {
         return Mage::app()->getStore()->getId();
     }
-    
+
 }

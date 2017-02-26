@@ -38,6 +38,8 @@
  */
 class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSearch_Model_Resource_Fulltext
 {
+    /** @var string $_suggestedQuery */
+    protected $suggestedQuery;
 
     /**
      * Overloaded method prepareResult.
@@ -84,7 +86,9 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
 
                     $adapter->insertMultiple($this->getTable('catalogsearch/result'), $data);
                 }
-
+                
+                $this->suggestedQuery = $search->getSuggestedQuery();
+                // todo: persist suggestion on the catalogsearch/query table
                 $this->_foundData = $foundData;
                 $query->setIsProcessed(1);
 
@@ -98,6 +102,8 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
                 ->where('query_id=?', $query->getId())
                 ->order(array('relevance DESC'));
             $this->_foundData = $adapter->fetchPairs($select);
+            // todo: load suggested query from query table
+//            $this->suggestedQuery = ;
         }
 
         return $this;
@@ -141,4 +147,11 @@ class Magentix_Solr_Model_CatalogSearch_Resource_Fulltext extends Mage_CatalogSe
         return $this;
     }
 
+    /**
+     * @return string
+     */
+    public function getSuggestedQuery()
+    {
+        return $this->suggestedQuery;
+    }
 }
