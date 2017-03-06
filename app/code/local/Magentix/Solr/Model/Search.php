@@ -153,7 +153,7 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service
      */
     public function getSuggestedQuery()
     {
-        return $this->_suggestions->collation;
+        return isset($this->_suggestions->collation) ? $this->_suggestions->collation : '';
     }
 
     /**

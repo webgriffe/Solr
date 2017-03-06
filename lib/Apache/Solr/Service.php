@@ -1115,19 +1115,18 @@ class Apache_Solr_Service
 		return $this->_sendRawPost($this->_updateUrl, $rawPost, $timeout);
 	}
 
-	/**
-	 * Simple Search interface
-	 *
-	 * @param string $query The raw query string
-	 * @param int $offset The starting offset for result documents
-	 * @param int $limit The maximum number of result documents to return
-	 * @param array $params key / value pairs for other query parameters (see Solr documentation), use arrays for parameter keys used more than once (e.g. facet.field)
-	 * @param string $method The HTTP method (Apache_Solr_Service::METHOD_GET or Apache_Solr_Service::METHOD::POST)
-	 * @return Apache_Solr_Response
-	 *
-	 * @throws Apache_Solr_HttpTransportException If an error occurs during the service call
-	 * @throws Apache_Solr_InvalidArgumentException If an invalid HTTP method is used
-	 */
+    /**
+     * Simple Search interface
+     *
+     * @param string $query The raw query string
+     * @param int $offset The starting offset for result documents
+     * @param int $limit The maximum number of result documents to return
+     * @param array $params key / value pairs for other query parameters (see Solr documentation), use arrays for parameter keys used more than once (e.g. facet.field)
+     * @param string $method The HTTP method (Apache_Solr_Service::METHOD_GET or Apache_Solr_Service::METHOD::POST)
+     * @param bool $includeSuggestion Include suggestion for misspell
+     * @return Apache_Solr_Response
+     * @throws Apache_Solr_InvalidArgumentException If an invalid HTTP method is used
+     */
     public function search(
         $query,
         $offset = 0,
@@ -1163,54 +1162,20 @@ class Apache_Solr_Service
 		$url = $this->_searchUrl;
         $queryString = $this->_generateQueryString($params);
         if ($includeSuggestion) {
+            // Don't use generateQueryString method cause it will cast the "true" to 1 and
+            // Solr seems to require "true" as parameters value literally
             $queryString .= '&spellcheck=true&spellcheck.collate=true&spellcheck.build=true';
             $url = $this->_spellUrl;
         }        
 
-        if ($method == self::METHOD_GET)
-        {
+        if ($method == self::METHOD_GET) {
             return $this->_sendRawGet($url . $this->_queryDelimiter . $queryString);
-        }
-        else if ($method == self::METHOD_POST)
-        {
+        } else if ($method == self::METHOD_POST) {
             return $this->_sendRawPost($url, $queryString, FALSE, 'application/x-www-form-urlencoded; charset=UTF-8');
-        }
-        else
-        {
-            throw new Apache_Solr_InvalidArgumentException("Unsupported method '$method', please use the Apache_Solr_Service::METHOD_* constants");
-        }
-    }
-
-    /**
-     * Simple Search interface
-     *
-     * @param string $query The raw query string
-     * @param string $method The HTTP method (Apache_Solr_Service::METHOD_GET or Apache_Solr_Service::METHOD::POST)
-     * @return Apache_Solr_Response
-     *
-     * @throws Apache_Solr_HttpTransportException If an error occurs during the service call
-     * @throws Apache_Solr_InvalidArgumentException If an invalid HTTP method is used
-     */
-    public function spell($query, $method = self::METHOD_GET)
-    {
-        $params = array();
-
-        // common parameters in this interface
-//        $params['wt'] = self::SOLR_WRITER;
-//        $params['json.nl'] = $this->_namedListTreatment;
-//
-//        $params['q'] = $query;
-//        $params['spellcheck'] = true;
-//        $params['spellcheck.collate'] = true;
-//        $params['spellcheck.build'] = true;
-
-        if ($method == self::METHOD_GET)
-        {
-            return $this->_sendRawGet($this->_spellUrl . $this->_queryDelimiter . $queryString);
-        }
-        else
-        {
-            throw new Apache_Solr_InvalidArgumentException("Unsupported method '$method', please use the Apache_Solr_Service::METHOD_* constants");
+        } else {
+            throw new Apache_Solr_InvalidArgumentException(
+                "Unsupported method '$method', please use the Apache_Solr_Service::METHOD_* constants"
+            );
         }
     }
 }
