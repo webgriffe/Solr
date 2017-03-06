@@ -75,7 +75,7 @@ class Magentix_Solr_Model_Search extends Apache_Solr_Service
                 'fl' => 'product_id,score',
                 'fq' => 'store_id:'.$storeId,
             );
-            $includeSuggestion = true; // todo: (bool)Mage::getStoreConfigFlag('solr/search/suggestion_enable');
+            $includeSuggestion = Mage::getStoreConfigFlag('solr/search/suggestion_enable');
             $response = $this->search($query, 0, $limit, $params, 'POST', $includeSuggestion);
             $this->setResponse($response->response);
             if (isset($response->spellcheck, $response->spellcheck->suggestions)) {
